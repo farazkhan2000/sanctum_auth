@@ -4,50 +4,57 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(Request $request) 
+    {
+        $fields = $request->validate([
+            'name' => 'required|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|confirmed'
+        ]);
+
+        $user = User::create($fields);
+
+        $token = $user->createToken($request->name);
+
+        return [
+            'user' => $user,
+            'token' => $token->plainTextToken
+        ];
+    }
+
+    public function login(Request $request) 
     {
         $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
+            'email' => 'required|email|exists:users',
+            'password' => 'required'
         ]);
+        
+        $user = User::where('email', $request->email)->first();
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        return response()->json(['message' => 'User registered successfully']);
-    }
-
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        if (!Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        if(!$user || !Hash::check($request->password, $user->password)) {
+            return [
+                'message' => 'The provided credentials are incorrect.'
+            ];
         }
 
-        $request->session()->regenerate();
+        $token = $user->createToken($user->name);
 
-        return response()->json(Auth::user());
+        return [
+            'user' => $user,
+            'token' => $token->plainTextToken
+        ];
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request) 
     {
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->user()->tokens()->delete();
 
-        return response()->json(['message' => 'Logged out']);
+        return [
+            'message' => 'You are looged out.'
+        ];
     }
 }

@@ -1,15 +1,20 @@
 <template>
   <div>
     <h2>Register</h2>
-    <input v-model="name" type="text" placeholder="Name" />
-    <input v-model="email" type="email" placeholder="Email" />
-    <input v-model="password" type="password" placeholder="Password" />
-    <button @click="register">Register</button>
+    <form @submit.prevent="register">
+      <input v-model="name" type="text" placeholder="Name" required />
+      <input v-model="email" type="email" placeholder="Email" required />
+      <input v-model="password" type="password" placeholder="Password" required />
+      <input v-model="password_confirmation" type="password" placeholder="Confirm Password" required />
+      <button type="submit">Register</button>
+    </form>
+    <p v-if="error" style="color: red;">{{ error }}</p>
+    <p v-if="success" style="color: green;">{{ success }}</p>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import { useApi } from '~/composables/useApi'; // Import the composable
 
 export default {
   data() {
@@ -17,22 +22,45 @@ export default {
       name: '',
       email: '',
       password: '',
+      password_confirmation: '',
+      error: '',
+      success: '',
     };
   },
   methods: {
     async register() {
       try {
-        const response = await axios.post('/register', {
-          name: this.name,
-          email: this.email,
-          password: this.password,
+        this.error = '';
+        this.success = '';
+
+        // Use `useApi` instead of `useFetch`
+        const { data, error } = await useApi('register', {
+          method: 'POST',
+          body: {
+            name: this.name,
+            email: this.email,
+            password: this.password,
+            password_confirmation: this.password_confirmation,
+          },
         });
 
-        alert('Registration successful! You can now log in.');
-        console.log(response.data); // Check response
-      } catch (error) {
-        alert('Registration failed: ' + error.message);
-        console.error(error);
+        // Handle errors
+        if (error.value) {
+          this.error = error.value.data?.message || 'Registration failed. Please try again.';
+          return;
+        }
+
+        // Handle success
+        if (data.value) {
+          this.success = 'Registration successful!';
+          console.log('User registered:', data.value);
+
+          // Optionally, redirect the user
+          // this.$router.push('/login');
+        }
+      } catch (err) {
+        this.error = 'An unexpected error occurred. Please try again.';
+        console.error('Registration error:', err);
       }
     },
   },
