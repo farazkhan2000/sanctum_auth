@@ -1,14 +1,19 @@
 export default defineNuxtRouteMiddleware((to, from) => {
-  const token = process.client ? localStorage.getItem('authToken') : null;
+  if (process.client) {
+    const token = localStorage.getItem('authToken');
 
-  // Allow access to public pages like home, login, register
-  const publicPages = ['/login', '/register', '/']; // Add more if needed
-  if (!token && !publicPages.includes(to.path)) {
-    return navigateTo('/login'); // Redirect to login if not authenticated
-  }
+    // Define public pages (accessible without authentication)
+    const publicPages = ['/login', '/register', '/'];
+    const isPublicPage = publicPages.includes(to.path);
 
-  // Prevent logged-in users from accessing login page
-  if (token && to.path === '/login') {
-    return navigateTo('/dashboard'); // Redirect logged-in users to dashboard
+    // If not logged in and trying to access a protected route, redirect to login
+    if (!token && !isPublicPage) {
+      return navigateTo('/login');
+    }
+
+    // If logged in and trying to access a public page, redirect to dashboard
+    if (token && isPublicPage) {
+      return navigateTo('/dashboard');
+    }
   }
 });

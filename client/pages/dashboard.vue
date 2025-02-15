@@ -1,36 +1,28 @@
 <template>
   <div>
     <h2 class="text-3xl font-bold underline">Dashboard</h2>
-    <p v-if="userEmail">Welcome, {{ userEmail }}!</p>
-    <p v-else>Loading user data...</p>
+    <p v-if="authStore.user">Welcome, {{ authStore.user.name }}!</p>
+    <p v-else>Error loading user data. Please try again.</p>
     <button @click="logout">Logout</button>
   </div>
 </template>
 
 <script>
+import { useAuthStore } from '~/stores/auth';
+
 export default {
   data() {
     return {
-      userEmail: '',
+      authStore: useAuthStore(),
     };
   },
   mounted() {
-    // Fetch user email from localStorage (mock authentication)
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      this.$router.push('/login'); // Redirect if not logged in
-    } else {
-      this.userEmail = localStorage.getItem('userEmail') || 'User'; // Mock user email
-    }
+    this.authStore.fetchUser(); 
+    console.log('authStore: ', this.authStore.fetchUser());
   },
   methods: {
-    logout() {
-      // Clear authentication data
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userEmail');
-
-      // Redirect to login page
-      this.$router.push('/login');
+    async logout() {
+      await this.authStore.logout();
     },
   },
 };
