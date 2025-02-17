@@ -75,7 +75,7 @@ export const useAuthStore = defineStore('auth', {
         const storedToken = localStorage.getItem('authToken');
         if (storedToken) {
           this.token = storedToken;
-          this.fetchUser(); // Fetch user data if token exists
+          return this.fetchUser(); // Fetch user data if token exists
         }
       }
     },

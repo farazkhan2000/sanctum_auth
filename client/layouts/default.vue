@@ -4,7 +4,7 @@
       <Navbar />
     </header>
     <main>
-      <slot />
+      <NuxtPage />
     </main>
   </div>
 </template>

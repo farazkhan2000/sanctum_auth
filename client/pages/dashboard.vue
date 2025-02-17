@@ -16,10 +16,6 @@ export default {
       authStore: useAuthStore(),
     };
   },
-  mounted() {
-    this.authStore.fetchUser(); 
-    console.log('authStore: ', this.authStore.fetchUser());
-  },
   methods: {
     async logout() {
       await this.authStore.logout();

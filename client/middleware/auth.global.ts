@@ -1,19 +1,21 @@
-export default defineNuxtRouteMiddleware((to, from) => {
-  if (process.client) {
-    const token = localStorage.getItem('authToken');
+export default defineNuxtRouteMiddleware(async (to, from) => {
+  const authStore = useAuthStore();
+  
+  // Wait for session restoration before checking authentication
+  if (!authStore.token) {
+    await authStore.restoreSession();
+  }
 
-    // Define public pages (accessible without authentication)
-    const publicPages = ['/login', '/register', '/'];
-    const isPublicPage = publicPages.includes(to.path);
+  const token = authStore.token;
 
-    // If not logged in and trying to access a protected route, redirect to login
-    if (!token && !isPublicPage) {
-      return navigateTo('/login');
-    }
+  const publicPages = ['/login', '/register', '/'];
+  const isPublicPage = publicPages.includes(to.path);
 
-    // If logged in and trying to access a public page, redirect to dashboard
-    if (token && isPublicPage) {
-      return navigateTo('/dashboard');
-    }
+  if (!token && !isPublicPage) {
+    return navigateTo('/login', { replace: true });
+  }
+
+  if (token && isPublicPage) {
+    return navigateTo('/dashboard', { replace: true });
   }
 });
